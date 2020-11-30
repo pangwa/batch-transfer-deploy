@@ -782,7 +782,8 @@ let MetaSenderComponent = class MetaSenderComponent {
             sub.unsubscribe();
         }, () => { });
         this.filteredTokens = this.tokenControl.valueChanges
-            .pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(([value]) => {
+            .pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["distinctUntilChanged"])(([v, c], [v2, c2]) => v == v2 && c == c2), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(([value, chainId]) => {
+            console.log('chainId', chainId);
             this.tokenObservable.next({
                 name: 'input',
                 address: value,

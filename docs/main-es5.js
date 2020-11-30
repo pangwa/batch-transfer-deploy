@@ -1367,9 +1367,22 @@
               _this7.transAddress = data.instance.address;
               sub.unsubscribe();
             }, function () {});
-            this.filteredTokens = this.tokenControl.valueChanges.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref) {
-              var _ref2 = _slicedToArray(_ref, 1),
-                  value = _ref2[0];
+            this.filteredTokens = this.tokenControl.valueChanges.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["distinctUntilChanged"])(function (_ref, _ref2) {
+              var _ref3 = _slicedToArray(_ref, 2),
+                  v = _ref3[0],
+                  c = _ref3[1];
+
+              var _ref4 = _slicedToArray(_ref2, 2),
+                  v2 = _ref4[0],
+                  c2 = _ref4[1];
+
+              return v == v2 && c == c2;
+            }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref5) {
+              var _ref6 = _slicedToArray(_ref5, 2),
+                  value = _ref6[0],
+                  chainId = _ref6[1];
+
+              console.log('chainId', chainId);
 
               _this7.tokenObservable.next({
                 name: 'input',
@@ -1382,10 +1395,10 @@
               }).value();
             }));
             var obToken = this.tokenObservable.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["debounceTime"])(1000), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["throttleTime"])(500));
-            this.$subToken = obContract.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(obToken), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["switchMap"])(function (_ref3) {
-              var _ref4 = _slicedToArray(_ref3, 2),
-                  transferData = _ref4[0],
-                  token = _ref4[1];
+            this.$subToken = obContract.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(obToken), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["switchMap"])(function (_ref7) {
+              var _ref8 = _slicedToArray(_ref7, 2),
+                  transferData = _ref8[0],
+                  token = _ref8[1];
 
               _this7.loadingService.addLoading();
 
@@ -1614,12 +1627,12 @@
 
             try {
               var contract = this.web3Service.tokenContract(erc20_artifacts.abi, tokenAddress);
-              return Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.balanceOf(transferData.instance.address).call()).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["zip"])(Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.name().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.symbol().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.decimals().call())), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref5) {
-                var _ref6 = _slicedToArray(_ref5, 4),
-                    balance = _ref6[0],
-                    name = _ref6[1],
-                    symbol = _ref6[2],
-                    decimals = _ref6[3];
+              return Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.balanceOf(transferData.instance.address).call()).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["zip"])(Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.name().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.symbol().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.decimals().call())), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref9) {
+                var _ref10 = _slicedToArray(_ref9, 4),
+                    balance = _ref10[0],
+                    name = _ref10[1],
+                    symbol = _ref10[2],
+                    decimals = _ref10[3];
 
                 console.log('info: ', balance, name, symbol, decimals);
                 return {
