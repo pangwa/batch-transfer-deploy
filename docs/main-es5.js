@@ -540,6 +540,12 @@
 
 
       var lodash__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(lodash__WEBPACK_IMPORTED_MODULE_3__);
+      /* harmony import */
+
+
+      var rxjs_operators__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
+      /*! rxjs/operators */
+      "kU1M");
 
       var Web3 = __webpack_require__(
       /*! web3 */
@@ -560,6 +566,9 @@
           window.addEventListener('load', function (event) {
             _this5.bootstrapWeb3();
           });
+          this.chainIdObs = Object(rxjs__WEBPACK_IMPORTED_MODULE_2__["timer"])(500, 1000).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["map"])(function () {
+            return _this5.chainId();
+          }, rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["distinctUntilChanged"]));
         }
 
         _createClass(Web3Service, [{
@@ -669,6 +678,11 @@
           key: "chainId",
           value: function chainId() {
             return lodash__WEBPACK_IMPORTED_MODULE_3__["chain"](this.web3).get('currentProvider.chainId', '0').parseInt().value();
+          }
+        }, {
+          key: "getChainIdObs",
+          value: function getChainIdObs() {
+            return this.chainIdObs;
           }
         }, {
           key: "tokenContract",
@@ -1294,8 +1308,25 @@
         }, {
           name: 'USDT',
           address: '0xd9ba894e0097f8cc2bbc9d24d308b98e36dc6d02'
+        }],
+        1: [{
+          name: 'CRU',
+          address: '0x32a7c02e79c4ea1008dd6564b35f131428673c41'
+        }, {
+          name: 'CSM',
+          address: '0x2620638EDA99F9e7E902Ea24a285456EE9438861'
+        }, {
+          name: 'CRU18',
+          address: '0x655ad6CC3Cf6BDCCaB3fa286CB328F3bce9a3E38'
+        }, {
+          name: 'USDT',
+          address: '0xdac17f958d2ee523a2206206994597c13d831ec7'
+        }, {
+          name: "USDC",
+          address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
         }]
       };
+      var emptyTokenArray = [];
       var maxSize = 100 * 1024; // 100kb
 
       var MetaSenderComponent = /*#__PURE__*/function () {
@@ -1310,13 +1341,6 @@
           this.addresses = [];
           this.displayedColumns = ['name', 'address', 'amount', 'operations'];
           this.dataSource = new _angular_material_table__WEBPACK_IMPORTED_MODULE_10__["MatTableDataSource"](this.addresses);
-          this.tokens = [{
-            name: 'CRU',
-            address: '0x002f24009df0c1e9215c98cec76f18d8eaf3db0f'
-          }, {
-            name: 'USDT',
-            address: '0xd9ba894e0097f8cc2bbc9d24d308b98e36dc6d02'
-          }];
           this.dataObservable = new rxjs__WEBPACK_IMPORTED_MODULE_12__["Subject"]();
           this.tokenObservable = new rxjs__WEBPACK_IMPORTED_MODULE_12__["Subject"]();
           this.model = {
@@ -1343,22 +1367,25 @@
               _this7.transAddress = data.instance.address;
               sub.unsubscribe();
             }, function () {});
-            this.filteredTokens = this.tokenControl.valueChanges.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (value) {
+            this.filteredTokens = this.tokenControl.valueChanges.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref) {
+              var _ref2 = _slicedToArray(_ref, 1),
+                  value = _ref2[0];
+
               _this7.tokenObservable.next({
                 name: 'input',
                 address: value
               });
 
               var v = lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](value);
-              return lodash__WEBPACK_IMPORTED_MODULE_5__["chain"](_this7.tokens).filter(function (token) {
+              return lodash__WEBPACK_IMPORTED_MODULE_5__["chain"](_this7.getTokens()).filter(function (token) {
                 return lodash__WEBPACK_IMPORTED_MODULE_5__["includes"](lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](token.name), v) || lodash__WEBPACK_IMPORTED_MODULE_5__["includes"](lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](token.address), v);
               }).value();
             }));
             var obToken = this.tokenObservable.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["debounceTime"])(1000), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["throttleTime"])(500));
-            this.$subToken = obContract.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(obToken), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["switchMap"])(function (_ref) {
-              var _ref2 = _slicedToArray(_ref, 2),
-                  transferData = _ref2[0],
-                  token = _ref2[1];
+            this.$subToken = obContract.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(obToken), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["switchMap"])(function (_ref3) {
+              var _ref4 = _slicedToArray(_ref3, 2),
+                  transferData = _ref4[0],
+                  token = _ref4[1];
 
               _this7.loadingService.addLoading();
 
@@ -1587,12 +1614,12 @@
 
             try {
               var contract = this.web3Service.tokenContract(erc20_artifacts.abi, tokenAddress);
-              return Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.balanceOf(transferData.instance.address).call()).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["zip"])(Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.name().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.symbol().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.decimals().call())), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref3) {
-                var _ref4 = _slicedToArray(_ref3, 4),
-                    balance = _ref4[0],
-                    name = _ref4[1],
-                    symbol = _ref4[2],
-                    decimals = _ref4[3];
+              return Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.balanceOf(transferData.instance.address).call()).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["zip"])(Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.name().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.symbol().call()), Object(rxjs__WEBPACK_IMPORTED_MODULE_12__["from"])(contract.methods.decimals().call())), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(function (_ref5) {
+                var _ref6 = _slicedToArray(_ref5, 4),
+                    balance = _ref6[0],
+                    name = _ref6[1],
+                    symbol = _ref6[2],
+                    decimals = _ref6[3];
 
                 console.log('info: ', balance, name, symbol, decimals);
                 return {
@@ -1836,6 +1863,15 @@
           key: "convertAmountToRaw",
           value: function convertAmountToRaw(amount) {
             return new BN(amount).multipliedBy(new BN(10).pow(this.tokenInfo.decimals));
+          }
+        }, {
+          key: "getTokens",
+          value: function getTokens() {
+            if (!lodash__WEBPACK_IMPORTED_MODULE_5__["has"](predefinedTokens, this.web3Service.chainId())) {
+              return emptyTokenArray;
+            }
+
+            return predefinedTokens[this.web3Service.chainId()];
           }
         }]);
 

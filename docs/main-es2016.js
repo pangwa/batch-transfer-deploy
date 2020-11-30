@@ -320,12 +320,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs */ "qCKp");
 /* harmony import */ var lodash__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! lodash */ "LvDl");
 /* harmony import */ var lodash__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(lodash__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! rxjs/operators */ "kU1M");
 
 
 
 
 const Web3 = __webpack_require__(/*! web3 */ "meUc");
 const contract = __webpack_require__(/*! @truffle/contract */ "sjkk");
+
+
 let Web3Service = class Web3Service {
     constructor() {
         this.ready = false;
@@ -333,6 +336,9 @@ let Web3Service = class Web3Service {
         window.addEventListener('load', (event) => {
             this.bootstrapWeb3();
         });
+        this.chainIdObs = Object(rxjs__WEBPACK_IMPORTED_MODULE_2__["timer"])(500, 1000).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["map"])(() => {
+            return this.chainId();
+        }, rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["distinctUntilChanged"]));
     }
     bootstrapWeb3() {
         // Checking if Web3 has been injected by the browser (Mist/MetaMask)
@@ -383,6 +389,9 @@ let Web3Service = class Web3Service {
         return lodash__WEBPACK_IMPORTED_MODULE_3__["chain"](this.web3)
             .get('currentProvider.chainId', '0')
             .parseInt().value();
+    }
+    getChainIdObs() {
+        return this.chainIdObs;
     }
     tokenContract(abi, address) {
         return new this.web3.eth.Contract(abi, address);
@@ -722,7 +731,24 @@ const predefinedTokens = {
             name: 'USDT',
             address: '0xd9ba894e0097f8cc2bbc9d24d308b98e36dc6d02',
         }],
+    1: [{
+            name: 'CRU',
+            address: '0x32a7c02e79c4ea1008dd6564b35f131428673c41'
+        }, {
+            name: 'CSM',
+            address: '0x2620638EDA99F9e7E902Ea24a285456EE9438861',
+        }, {
+            name: 'CRU18',
+            address: '0x655ad6CC3Cf6BDCCaB3fa286CB328F3bce9a3E38'
+        }, {
+            name: 'USDT',
+            address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        }, {
+            name: "USDC",
+            address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        }]
 };
+const emptyTokenArray = [];
 const maxSize = 100 * 1024; // 100kb
 let MetaSenderComponent = class MetaSenderComponent {
     constructor(web3Service, matSnackBar, loadingService) {
@@ -734,13 +760,6 @@ let MetaSenderComponent = class MetaSenderComponent {
         this.addresses = [];
         this.displayedColumns = ['name', 'address', 'amount', 'operations'];
         this.dataSource = new _angular_material_table__WEBPACK_IMPORTED_MODULE_10__["MatTableDataSource"](this.addresses);
-        this.tokens = [{
-                name: 'CRU',
-                address: '0x002f24009df0c1e9215c98cec76f18d8eaf3db0f',
-            }, {
-                name: 'USDT',
-                address: '0xd9ba894e0097f8cc2bbc9d24d308b98e36dc6d02',
-            }];
         this.dataObservable = new rxjs__WEBPACK_IMPORTED_MODULE_12__["Subject"]();
         this.tokenObservable = new rxjs__WEBPACK_IMPORTED_MODULE_12__["Subject"]();
         this.model = {
@@ -763,13 +782,13 @@ let MetaSenderComponent = class MetaSenderComponent {
             sub.unsubscribe();
         }, () => { });
         this.filteredTokens = this.tokenControl.valueChanges
-            .pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(value => {
+            .pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["startWith"])(''), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["combineLatest"])(this.web3Service.getChainIdObs()), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_13__["map"])(([value]) => {
             this.tokenObservable.next({
                 name: 'input',
                 address: value,
             });
             const v = lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](value);
-            return lodash__WEBPACK_IMPORTED_MODULE_5__["chain"](this.tokens)
+            return lodash__WEBPACK_IMPORTED_MODULE_5__["chain"](this.getTokens())
                 .filter((token) => lodash__WEBPACK_IMPORTED_MODULE_5__["includes"](lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](token.name), v)
                 || lodash__WEBPACK_IMPORTED_MODULE_5__["includes"](lodash__WEBPACK_IMPORTED_MODULE_5__["lowerCase"](token.address), v))
                 .value();
@@ -1068,6 +1087,12 @@ let MetaSenderComponent = class MetaSenderComponent {
     convertAmountToRaw(amount) {
         return new BN(amount)
             .multipliedBy(new BN(10).pow(this.tokenInfo.decimals));
+    }
+    getTokens() {
+        if (!lodash__WEBPACK_IMPORTED_MODULE_5__["has"](predefinedTokens, this.web3Service.chainId())) {
+            return emptyTokenArray;
+        }
+        return predefinedTokens[this.web3Service.chainId()];
     }
 };
 MetaSenderComponent.ctorParameters = () => [
